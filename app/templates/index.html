@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKEYGEN — System Key Generation Utility</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0b0d0f;
+      --surface:  #111418;
+      --border:   #1e2530;
+      --amber:    #ffb020;
+      --amber-dim:#7a5510;
+      --green:    #2aff82;
+      --red:      #ff3b3b;
+      --text:     #c8cdd6;
+      --muted:    #4a5260;
+      --mono:     'Share Tech Mono', monospace;
+      --sans:     'Barlow Condensed', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 1rem 3rem;
+      /* subtle scanline texture */
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255,255,255,0.012) 2px,
+        rgba(255,255,255,0.012) 4px
+      );
+    }
+
+    /* ── Header ── */
+    header {
+      width: 100%;
+      max-width: 680px;
+      border-bottom: 1px solid var(--amber-dim);
+      padding: 2.5rem 0 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      color: var(--amber);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--amber);
+      border-radius: 50%;
+      animation: blink 1.4s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    h1 {
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      letter-spacing: 0.06em;
+      line-height: 1;
+      color: #fff;
+      text-transform: uppercase;
+    }
+    h1 span { color: var(--amber); }
+
+    .subtitle {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 680px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 2rem 2rem 2.5rem;
+      position: relative;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--amber), transparent);
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+    }
+
+    /* ── Form ── */
+    .field { margin-bottom: 1.6rem; }
+
+    label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      color: var(--amber);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: #0b0d0f;
+      border: 1px solid var(--border);
+      border-radius: 1px;
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 1.2rem;
+      letter-spacing: 0.18em;
+      padding: 0.65rem 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+      text-transform: uppercase;
+    }
+    input[type="text"]::placeholder { color: var(--muted); font-size: 0.85rem; }
+    input[type="text"]:focus { border-color: var(--amber-dim); }
+    input[type="text"].error { border-color: var(--red); }
+
+    .hint {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Button ── */
+    button[type="submit"] {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.85rem;
+      cursor: pointer;
+      border-radius: 1px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.15s, color 0.15s;
+    }
+    button[type="submit"]:hover:not(:disabled) {
+      background: var(--amber);
+      color: #000;
+    }
+    button[type="submit"]:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ── Status console ── */
+    #console {
+      display: none;
+      margin-top: 1.8rem;
+      border: 1px solid var(--border);
+      background: #070809;
+      border-radius: 1px;
+      padding: 1rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 80px;
+      position: relative;
+    }
+    #console.visible { display: block; }
+
+    .console-line {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; } }
+
+    .console-line .prefix { color: var(--amber); flex-shrink: 0; }
+    .console-line.ok   .prefix { color: var(--green); }
+    .console-line.err  .prefix { color: var(--red); }
+    .console-line.info .prefix { color: var(--amber); }
+
+    /* spinning cursor */
+    .spinner {
+      display: inline-block;
+      width: 10px;
+      animation: spin 0.7s steps(8) infinite;
+    }
+    @keyframes spin {
+      0%  { content: '|'; }
+      12% { content: '/'; }
+      25% { content: '—'; }
+      37% { content: '\\'; }
+      50% { content: '|'; }
+      62% { content: '/'; }
+      75% { content: '—'; }
+      87% { content: '\\'; }
+    }
+
+    /* ── Info footer ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 2.5rem;
+      width: 100%;
+      max-width: 680px;
+    }
+    .info-cell {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1rem 1.2rem;
+      border-radius: 1px;
+    }
+    .info-cell .label {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+    }
+    .info-cell .value {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+    #status-dot { color: var(--muted); }
+    #status-dot.ready { color: var(--green); }
+    #status-dot.error { color: var(--red); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">MOTOROLA INC. &nbsp;·&nbsp; STAND ALONE FIELD PROGRAM</div>
+    <h1><span>S</span>KEY<span>GEN</span></h1>
+    <p class="subtitle">System Key Generation Utility &nbsp;/&nbsp; Ver A00.00.03</p>
+  </header>
+
+  <div class="card">
+    <p class="section-label">// TASK: MAKE A SYSTEM KEY FILE</p>
+
+    <form id="skeygen-form" autocomplete="off">
+      <div class="field">
+        <label for="system_id">System ID (Hexadecimal)</label>
+        <input
+          type="text"
+          id="system_id"
+          name="system_id"
+          placeholder="e.g. 1A2B3C"
+          maxlength="6"
+          spellcheck="false"
+        >
+        <p class="hint">1 – 6 hex characters &nbsp;|&nbsp; 0–9 · A–F</p>
+      </div>
+
+      <button type="submit" id="gen-btn">Generate System Key File</button>
+    </form>
+
+    <div id="console">
+      <!-- lines injected by JS -->
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-cell">
+      <div class="label">Service Status</div>
+      <div class="value" id="status-dot">● Checking…</div>
+    </div>
+    <div class="info-cell">
+      <div class="label">Output Format</div>
+      <div class="value">Motorola .KEY binary</div>
+    </div>
+  </div>
+
+  <script>
+    const form   = document.getElementById('skeygen-form');
+    const input  = document.getElementById('system_id');
+    const btn    = document.getElementById('gen-btn');
+    const cons   = document.getElementById('console');
+    const sdot   = document.getElementById('status-dot');
+
+    // ── Health check ────────────────────────────────────────────────────────
+    async function checkHealth() {
+      try {
+        const r = await fetch('/health');
+        const d = await r.json();
+        if (d.ready) {
+          sdot.textContent = '● Ready';
+          sdot.className   = 'value ready';
+        } else {
+          const missing = [];
+          if (!d.dosbox_x)     missing.push('dosbox-x');
+          if (!d.skeygen_exe)  missing.push('SKEYGEN.EXE');
+          sdot.textContent = `● Missing: ${missing.join(', ')}`;
+          sdot.className   = 'value error';
+        }
+      } catch {
+        sdot.textContent = '● Unreachable';
+        sdot.className   = 'value error';
+      }
+    }
+    checkHealth();
+
+    // ── Console helpers ──────────────────────────────────────────────────────
+    function clearConsole() { cons.innerHTML = ''; cons.classList.add('visible'); }
+    function addLine(type, prefix, text) {
+      const d = document.createElement('div');
+      d.className = `console-line ${type}`;
+      d.innerHTML = `<span class="prefix">${prefix}</span><span>${text}</span>`;
+      cons.appendChild(d);
+      cons.scrollTop = cons.scrollHeight;
+    }
+
+    let spinnerEl = null;
+    function startSpinner(msg) {
+      spinnerEl = document.createElement('div');
+      spinnerEl.className = 'console-line info';
+      spinnerEl.innerHTML = `<span class="prefix">◈</span><span>${msg} <span class="spinner" id="sp">|</span></span>`;
+      cons.appendChild(spinnerEl);
+      // animate manually since CSS content animation isn't reliable cross-browser
+      const frames = ['|','/','-','\\'];
+      let i = 0;
+      spinnerEl._timer = setInterval(() => {
+        const sp = spinnerEl.querySelector('#sp');
+        if (sp) sp.textContent = frames[i++ % frames.length];
+      }, 100);
+    }
+    function stopSpinner() {
+      if (spinnerEl) {
+        clearInterval(spinnerEl._timer);
+        spinnerEl.remove();
+        spinnerEl = null;
+      }
+    }
+
+    // ── Input validation (live) ───────────────────────────────────────────────
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+      input.classList.remove('error');
+    });
+
+    // ── Form submit ──────────────────────────────────────────────────────────
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const sysId = input.value.trim();
+
+      // Client-side validation
+      if (!sysId || !/^[0-9A-Fa-f]{1,6}$/.test(sysId)) {
+        input.classList.add('error');
+        clearConsole();
+        addLine('err', '✗', 'Invalid System ID — enter 1 to 6 hex characters.');
+        return;
+      }
+
+      btn.disabled = true;
+      clearConsole();
+      addLine('info', '▸', `System ID: <strong>${sysId}</strong>`);
+      addLine('info', '▸', 'Launching DOSBox-X and loading SKEYGEN.EXE…');
+      startSpinner('Running key generation (this takes ~5-15 seconds)');
+
+      try {
+        const fd = new FormData();
+        fd.append('system_id', sysId);
+
+        const resp = await fetch('/generate', { method: 'POST', body: fd });
+        stopSpinner();
+
+        if (resp.ok) {
+          // Trigger file download
+          const blob = await resp.blob();
+          const cd   = resp.headers.get('Content-Disposition') || '';
+          const match = cd.match(/filename="?([^";\n]+)"?/);
+          const fname = match ? match[1] : `${sysId}.KEY`;
+
+          const url = URL.createObjectURL(blob);
+          const a   = document.createElement('a');
+          a.href = url; a.download = fname;
+          document.body.appendChild(a); a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          addLine('ok',  '✔', `Key file generated: <strong>${fname}</strong>`);
+          addLine('ok',  '✔', 'Download started.');
+        } else {
+          let err = 'Unknown error.';
+          try { const j = await resp.json(); err = j.error || err; } catch {}
+          addLine('err', '✗', `Error: ${err}`);
+        }
+      } catch (ex) {
+        stopSpinner();
+        addLine('err', '✗', `Network error: ${ex.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

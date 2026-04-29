@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+work/
+*.KEY
+*.key
+dosbox/
+qemu/FD13LITE.img
+qemu/FD13-LiteUSB.zip
+qemu/FD13LITE.vmdk
+SKEYGEN.EXE
+.gunicorn/
